@@ -1,3 +1,5 @@
+### View The Live Dashboard On [streamlit.io](https://app-executive-dashboard.streamlit.app/)
+
 # Executive Analytics Dashboard (Retail Sailors ™)
 
 A high-performance, interactive retail analytics dashboard built with **Streamlit** and powered by **DuckDB** as an in-memory SQL backend. This project serves as a portfolio piece demonstrating how to bypass memory-heavy data processing frameworks (like Pandas) in favor of fast, multi-threaded relational logic directly inside a web application lifecycle.
