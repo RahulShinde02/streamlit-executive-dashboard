@@ -43,13 +43,13 @@ def get_Data(path: str):
         return f.read()
     
 #=========================================================================================================================
-#                    Option Menu                  
+#                                                  Option Menu                  
 #=========================================================================================================================
 
 selected_dashboard = option_menu(
     menu_title=None, 
-    options=["Sales Analysis", "Product Analysis", "Customer Analysis"], 
-    icons=["graph-up-arrow", "box-seam", "people"],
+    options=["Sales Analysis", "Product Analysis", "Regional Analysis"], 
+    icons=["graph-up-arrow", "box-seam", "globe"],
     orientation="horizontal", 
     styles={
         "container": {"padding": "0px","background-color": "#f0f2f6", "border-radius": "8px"},
@@ -203,7 +203,7 @@ if selected_dashboard == "Sales Analysis":
     
 
 ###########################################################################################################################
-# Product Section
+#                                                   Product Section
 ###########################################################################################################################
 
 if selected_dashboard == "Product Analysis":
@@ -278,23 +278,83 @@ if selected_dashboard == "Product Analysis":
     )
     st.plotly_chart(fig, use_container_width=True)
 
+#--------------------------------------------------------------------------------------------------------------------------
+    query = f"select Product_Name, sum(profit) as rev from flat where {where_clause2} group by Product_Name order by rev desc limit 20 ;"
+    top_20_p = cursor.execute(query).df()
+    st.header('Top 10 Profit-Generating Products')
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=top_20_p['rev'],
+            y=top_20_p['Product_Name'], 
+            orientation='h',   
+            marker_color="#0dff00",
+            name='Top 20 Products'
+        )
+    )
+    fig.update_layout(
+        xaxis_title="Profit",
+        yaxis_title="Product Name", 
+        yaxis=dict(autorange="reversed"),
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
+    query = f"select Product_Name, sum(profit) as rev from flat where {where_clause2} group by Product_Name order by rev asc limit 20 ;"
+    bottom_20_p = cursor.execute(query).df()
+    st.header('10 Lowest Performing Products')
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=bottom_20_p['rev'],
+            y=bottom_20_p['Product_Name'],
+            orientation='h', 
+            marker_color="#ff0000",
+            name='Bottom 20 Products'
+        )
+    )
+    fig.update_layout(
+        xaxis_title="Profit/Loss", 
+        yaxis_title="Product Name",
+        yaxis=dict(categoryorder="array", categoryarray=bottom_20['Product_Name'][::-1]), 
+    )
+    st.plotly_chart(fig, use_container_width=True)
 ###########################################################################################################################
-# customer Section
+#                                                customer Section
 ###########################################################################################################################
 
-if selected_dashboard == "Customer Analysis":
+if selected_dashboard == "Regional Analysis":
     where_clause = where_builder(date_range=date_range,selected_categories=selected_categories)
     where_clause2 = where_builder(date_range=date_range,selected_country=selected_country)
+    st.title('Country wise Revenue')
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        query =f"select sum(sales) from flat where Country = 'France' and {where_clause} "
+        france_rev = cursor.execute(query).fetchone()[0]
+        st.metric(label='France',
+                  value=f"${france_rev:,.0f}")
+    with col2:
+        query =f"select sum(sales) from flat where Country = 'Germany' and {where_clause} "
+        Germany_rev = cursor.execute(query).fetchone()[0]
+        st.metric(label='Germany',
+                  value=f"${Germany_rev:,.0f}")
+    with col3:
+        query =f"select sum(sales) from flat where Country = 'Usa' and {where_clause} "
+        usa_rev = cursor.execute(query).fetchone()[0]
+        st.metric(label='USA',
+                  value=f"${usa_rev:,.0f}")
+    with col4:
+        query =f"select sum(sales) from flat where Country = 'Italy' and {where_clause} "
+        itlly_rev = cursor.execute(query).fetchone()[0]
+        st.metric(label='Italy',
+                  value=f"${itlly_rev:,.0f}")
 
     query = f'select upper(Country) as Country, sum(sales) as Revenue from flat where {where_clause} group by Country;'
     country_rev = cursor.execute(query).df()
     fig = px.pie(country_rev,names='Country',values='Revenue')
-    st.header('Revenue by Country')
+    st.header('Revenue Share by Country')
     st.plotly_chart(fig,use_container_width=True)
 
     query = f"select Customer_ID, CONCAT(First_Name, ' ', Last_Name) AS Name, Country, round(sum(sales),2) as Revenue from flat where {where_clause2} group by Customer_ID , Name, Country order by Revenue desc limit 20"
     top_20_cust = cursor.execute(query).df()
-    st.header('Top Customers by Revenue')
+    st.header('Top 20 Customers by Revenue')
     st.table(top_20_cust)
-
