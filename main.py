@@ -46,6 +46,8 @@ def get_Data(path: str):
 #                                                  Option Menu                  
 #=========================================================================================================================
 
+# here we are setting option menu for different sections of dashboard so whole dashboard will not load at once,
+#  it will be fast, look clean and organized
 selected_dashboard = option_menu(
     menu_title=None, 
     options=["Sales Analysis", "Product Analysis", "Regional Analysis"], 
@@ -61,6 +63,7 @@ selected_dashboard = option_menu(
 
 st.set_page_config(page_title="Executive Analytics Dashboard", layout="wide")
 
+# logo in sidebar so it wont take valuable space on main dashboard
 st.sidebar.image(get_Data('dataset/images/logo.jpg'))
 st.sidebar.title('Retail Sailors ™',text_alignment='center')
 #########################################################################################################################
@@ -71,6 +74,7 @@ st.sidebar.title('Retail Sailors ™',text_alignment='center')
 con = db_init()
 cursor = con.cursor()
 
+# getting the values for filters from database 
 start_date = cursor.execute("SELECT MIN(Order_Date) FROM flat").fetchone()[0]
 end_date = cursor.execute("SELECT MAX(Order_Date) FROM flat").fetchone()[0]
 countries_list = cursor.execute('select distinct Country from flat').df()['Country'].tolist()
@@ -79,12 +83,13 @@ category_list = cursor.execute('select distinct Category from flat').df()['Categ
 st.sidebar.markdown("---")
 st.sidebar.header("Global Filters")
 
-
+# creaiing multiselection filters for dashboard
 date_range = st.sidebar.date_input("Select Date Range", [],min_value=start_date,max_value=end_date)
 st.sidebar.text(f"📅 Data Available From : \n{start_date.strftime('%Y-%m-%d')}  to  {end_date.strftime('%Y-%m-%d')}")
 selected_country = st.sidebar.multiselect('Countries :',countries_list,default=countries_list,key='select_count_key')
 selected_categories = st.sidebar.multiselect('Product Category :',category_list,default=category_list,key='select_category_key')
 
+# defining a where clause building function so we will not need to write where clause in sql again and again
 def where_builder(**kwargs):
     date_range = kwargs.get('date_range')
     selected_categories = kwargs.get('selected_categories')
@@ -112,6 +117,7 @@ if selected_dashboard == "Sales Analysis":
     where_clause = where_builder(date_range=date_range,selected_categories=selected_categories,selected_country=selected_country)
     # here ↑ we will accept everything from global
     st.title('KPI')
+    # KPI cards for total sale, total profit,total customers,profit margins 
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -144,6 +150,7 @@ if selected_dashboard == "Sales Analysis":
             value=f'{profit_mg:.1%}'
         )
 
+    # dual axis bar graph for sales and order count
     query = f'select year_month, sum(sales) as sales , count(Order_ID) as orders, from flat WHERE  {where_clause} group by year_month order by year_month asc;'
     monthly_rev_cust = cursor.execute(query).df()
 
@@ -180,6 +187,7 @@ if selected_dashboard == "Sales Analysis":
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    # bar chart showing month wise profit 
     query = f'select year_month as Month, sum(profit) as Profit from flat WHERE  {where_clause} group by year_month order by year_month asc;'
     monthly_profit =cursor.execute(query).df()
     st.header('Monthly Profit Trends')
@@ -211,6 +219,7 @@ if selected_dashboard == "Product Analysis":
     where_clause = where_builder(date_range=date_range,selected_country=selected_country)
     st.title('Category Performance')
 
+    # cards for product categories
     col1, col2, col3 = st.columns(3)
     with col1:
         query = f"select sum(sales) from flat where category = 'Office Supplies' and {where_clause};"
@@ -231,12 +240,13 @@ if selected_dashboard == "Product Analysis":
             label= "Furniture - Revenue",
             value=f"${fu_rev:,.0f}")
     
-
+    # pie chart showing each product category share in revenue
     query = f"select Category, sum(sales) as rev from flat where {where_clause} group by Category"
     pro_cat_rev = cursor.execute(query).df()
     fig = px.pie(pro_cat_rev,names='Category',values='rev')
     st.plotly_chart(fig, use_container_width=True)
 
+    # top and bottom 10 products by revenue
     where_clause2 = where_builder(date_range=date_range,selected_categories=selected_categories,selected_country=selected_country)    
     query = f"select Product_Name, sum(sales) as rev from flat where {where_clause2} group by Product_Name order by rev desc limit 20 ;"
     top_20 = cursor.execute(query).df()
@@ -279,6 +289,7 @@ if selected_dashboard == "Product Analysis":
     st.plotly_chart(fig, use_container_width=True)
 
 #--------------------------------------------------------------------------------------------------------------------------
+    # top and bottom 10 generiting profit/loss
     query = f"select Product_Name, sum(profit) as rev from flat where {where_clause2} group by Product_Name order by rev desc limit 20 ;"
     top_20_p = cursor.execute(query).df()
     st.header('Top 10 Profit-Generating Products')
@@ -326,6 +337,8 @@ if selected_dashboard == "Regional Analysis":
     where_clause = where_builder(date_range=date_range,selected_categories=selected_categories)
     where_clause2 = where_builder(date_range=date_range,selected_country=selected_country)
     st.title('Country wise Revenue')
+    # cards showing revenue of countries.
+    # we have to hardcode it, it can be made dynamic with Globals injection but our script/app should be predictable
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         query =f"select sum(sales) from flat where Country = 'France' and {where_clause} "
@@ -348,12 +361,14 @@ if selected_dashboard == "Regional Analysis":
         st.metric(label='Italy',
                   value=f"${itlly_rev:,.0f}")
 
+    # pie chart shoeing countrywise contribution iin revenue
     query = f'select upper(Country) as Country, sum(sales) as Revenue from flat where {where_clause} group by Country;'
     country_rev = cursor.execute(query).df()
     fig = px.pie(country_rev,names='Country',values='Revenue')
     st.header('Revenue Share by Country')
     st.plotly_chart(fig,use_container_width=True)
-
+    
+    # top 20 customers contributing in revenue 
     query = f"select Customer_ID, CONCAT(First_Name, ' ', Last_Name) AS Name, Country, round(sum(sales),2) as Revenue from flat where {where_clause2} group by Customer_ID , Name, Country order by Revenue desc limit 20"
     top_20_cust = cursor.execute(query).df()
     st.header('Top 20 Customers by Revenue')
