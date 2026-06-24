@@ -61,7 +61,7 @@ selected_dashboard = option_menu(
 
 st.set_page_config(page_title="Executive Analytics Dashboard", layout="wide")
 
-st.sidebar.image(get_Data(r'dataset\images\logo.jpg'))
+st.sidebar.image(get_Data('dataset/images/logo.jpg'))
 st.sidebar.title('Retail Sailors ™',text_alignment='center')
 #########################################################################################################################
 #                                             Sidebar and filter section 

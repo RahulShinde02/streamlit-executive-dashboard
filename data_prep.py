@@ -1,9 +1,9 @@
 #%%
 import pandas as pd
 #%%
-customers = pd.read_csv(r'dataset\raw_dataset\Customers.csv',delimiter=';')
-orders = pd.read_csv(r'dataset\raw_dataset\Orders.csv',delimiter=';')
-products = pd.read_csv(r'dataset\raw_dataset\Products.csv',delimiter=';')
+customers = pd.read_csv('dataset/raw_dataset/Customers.csv',delimiter=';')
+orders = pd.read_csv('dataset/raw_dataset/Orders.csv',delimiter=';')
+products = pd.read_csv('dataset/raw_dataset/Products.csv',delimiter=';')
 
 #%%
 orders.info()
@@ -53,7 +53,7 @@ products
 ### thus store it in seperate directory in dataset directory
 ### using parquet format cause its storage efficient and loads faster than csv.
 # %%
-orders.to_parquet(r'dataset\cleaned_dataset\orders.parquet')
-customers.to_parquet(r'dataset\cleaned_dataset\customers.parquet')
-products.to_parquet(r'dataset\cleaned_dataset\products.parquet')
+orders.to_parquet(r'dataset/cleaned_dataset/orders.parquet')
+customers.to_parquet(r'dataset/cleaned_dataset/customers.parquet')
+products.to_parquet(r'dataset/cleaned_dataset/products.parquet')
 
