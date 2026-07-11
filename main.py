@@ -162,80 +162,98 @@ if selected_dashboard == "Sales Analysis":
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        query = f"SELECT ROUND(SUM(Sales)) FROM flat WHERE {where_clause}"
-        total_sales = cursor.execute(query).fetchone()[0]
-        st.metric(
-            label="Total Sales",
-            value=f"$ {total_sales:,.0f}",
-        )
+        try:
+            query = f"SELECT ROUND(SUM(Sales)) FROM flat WHERE {where_clause}"
+            total_sales = cursor.execute(query).fetchone()[0]
+            st.metric(
+                label="Total Sales",
+                value=f"$ {total_sales:,.0f}",
+            )
+        except Exception:
+            st.text("No data found for this selection.")
 
     with col2:
-        query = f"SELECT ROUND(SUM(profit)) FROM flat WHERE {where_clause}"
-        total_profit = cursor.execute(query).fetchone()[0]
-        st.metric(label="Profit", value=f"$ {total_profit:,.0f}")
+        try:
+            query = f"SELECT ROUND(SUM(profit)) FROM flat WHERE {where_clause}"
+            total_profit = cursor.execute(query).fetchone()[0]
+            st.metric(label="Profit", value=f"$ {total_profit:,.0f}")
+        except Exception:
+            st.text("No data found for this selection.")
 
     with col3:
-        query = f"SELECT COUNT(DISTINCT Customer_ID) FROM flat where {where_clause}"
-        total_customers = cursor.execute(query).fetchone()[0]
-        st.metric(label="Customers", value=f"{total_customers:,.0f}")
+        try:
+            query = f"SELECT COUNT(DISTINCT Customer_ID) FROM flat where {where_clause}"
+            total_customers = cursor.execute(query).fetchone()[0]
+            st.metric(label="Customers", value=f"{total_customers:,.0f}")
+        except Exception:
+            st.text("No data found for this selection.")
+        
     with col4:
-        profit_mg = total_profit / total_sales
-        st.metric(label="Profit Margin", value=f"{profit_mg:.1%}")
+        try:
+            profit_mg = total_profit / total_sales
+            st.metric(label="Profit Margin", value=f"{profit_mg:.1%}")
+        except Exception:
+            st.text("No data found for this selection.")
 
     # dual axis bar graph for sales and order count
-    query = f"select year_month, sum(sales) as sales , count(Order_ID) as orders, from flat WHERE  {where_clause} group by year_month order by year_month asc;"
-    monthly_rev_cust = cursor.execute(query).df()
+    try:
+        query = f"select year_month, sum(sales) as sales , count(Order_ID) as orders, from flat WHERE  {where_clause} group by year_month order by year_month asc;"
+        monthly_rev_cust = cursor.execute(query).df()
 
-    st.header("Revenue and Order Trends")
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+        st.header("Revenue and Order Trends")
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    fig.add_trace(
-        go.Bar(
-            x=monthly_rev_cust["year_month"],
-            y=monthly_rev_cust["sales"],
-            name="Revenue",
-            marker_color="#21a3f1",
-        ),
-        secondary_y=False,
-    )
+        fig.add_trace(
+            go.Bar(
+                x=monthly_rev_cust["year_month"],
+                y=monthly_rev_cust["sales"],
+                name="Revenue",
+                marker_color="#21a3f1",
+            ),
+            secondary_y=False,
+        )
 
-    fig.add_trace(
-        go.Scatter(
-            x=monthly_rev_cust["year_month"],
-            y=monthly_rev_cust["orders"],
-            mode="lines+markers",
-            name="Orders",
-            line=dict(color="orange", width=3),
-        ),
-        secondary_y=True,
-    )
+        fig.add_trace(
+            go.Scatter(
+                x=monthly_rev_cust["year_month"],
+                y=monthly_rev_cust["orders"],
+                mode="lines+markers",
+                name="Orders",
+                line=dict(color="orange", width=3),
+            ),
+            secondary_y=True,
+        )
 
-    fig.update_layout(
-        xaxis_title="Months", yaxis=dict(title="Revenue"), yaxis2=dict(title="Orders")
-    )
-    st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(
+            xaxis_title="Months", yaxis=dict(title="Revenue"), yaxis2=dict(title="Orders")
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
 
     # bar chart showing month wise profit
-    query = f"select year_month as Month, sum(profit) as Profit from flat WHERE  {where_clause} group by year_month order by year_month asc;"
-    monthly_profit = cursor.execute(query).df()
-    st.header("Monthly Profit Trends")
+    try:
+        query = f"select year_month as Month, sum(profit) as Profit from flat WHERE  {where_clause} group by year_month order by year_month asc;"
+        monthly_profit = cursor.execute(query).df()
+        st.header("Monthly Profit Trends")
 
-    fig = go.Figure()
-    bar_colors = ["red" if val < 0 else "#21a3f1" for val in monthly_profit["Profit"]]
-    fig.add_trace(
-        go.Bar(
-            x=monthly_profit["Month"],
-            y=monthly_profit["Profit"],
-            marker_color=bar_colors,
-            name="Profit",
+        fig = go.Figure()
+        bar_colors = ["red" if val < 0 else "#21a3f1" for val in monthly_profit["Profit"]]
+        fig.add_trace(
+            go.Bar(
+                x=monthly_profit["Month"],
+                y=monthly_profit["Profit"],
+                marker_color=bar_colors,
+                name="Profit",
+            )
         )
-    )
-    fig.update_layout(
-        xaxis_title="Month",
-        yaxis_title="Profit",
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
+        fig.update_layout(
+            xaxis_title="Month",
+            yaxis_title="Profit",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
     query = f"Select * from flat where {where_clause}"
 
 
@@ -253,23 +271,37 @@ if selected_dashboard == "Product Analysis":
     # cards for product categories
     col1, col2, col3 = st.columns(3)
     with col1:
-        query = f"select sum(sales) from flat where category = 'Office Supplies' and {where_clause};"
-        os_rev = cursor.execute(query).fetchone()[0]
-        st.metric(label="Office Supplies Revenue", value=f"${os_rev:,.0f}")
+        try:
+            query = f"select sum(sales) from flat where category = 'Office Supplies' and {where_clause};"
+            os_rev = cursor.execute(query).fetchone()[0]
+            st.metric(label="Office Supplies Revenue", value=f"${os_rev:,.0f}")
+        except Exception:
+            st.text("No data found for this selection.")  
+
     with col2:
-        query = f"select sum(sales) from flat where category = 'Technology'and {where_clause};"
-        tec_rev = cursor.execute(query).fetchone()[0]
-        st.metric(label="Tech-Product Revenue", value=f"${tec_rev:,.0f}")
+        try:
+            query = f"select sum(sales) from flat where category = 'Technology'and {where_clause};"
+            tec_rev = cursor.execute(query).fetchone()[0]
+            st.metric(label="Tech-Product Revenue", value=f"${tec_rev:,.0f}")
+        except Exception:
+            st.text("No data found for this selection.")
+
     with col3:
-        query = f"select sum(sales) from flat where category = 'Furniture'and {where_clause};"
-        fu_rev = cursor.execute(query).fetchone()[0]
-        st.metric(label="Furniture - Revenue", value=f"${fu_rev:,.0f}")
+        try:
+            query = f"select sum(sales) from flat where category = 'Furniture'and {where_clause};"
+            fu_rev = cursor.execute(query).fetchone()[0]
+            st.metric(label="Furniture - Revenue", value=f"${fu_rev:,.0f}")
+        except Exception:
+            st.text("No data found for this selection.")
 
     # pie chart showing each product category share in revenue
-    query = f"select Category, sum(sales) as rev from flat where {where_clause} group by Category"
-    pro_cat_rev = cursor.execute(query).df()
-    fig = px.pie(pro_cat_rev, names="Category", values="rev")
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        query = f"select Category, sum(sales) as rev from flat where {where_clause} group by Category"
+        pro_cat_rev = cursor.execute(query).df()
+        fig = px.pie(pro_cat_rev, names="Category", values="rev")
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
 
     # top and bottom 10 products by revenue
     where_clause2 = where_builder(
@@ -277,92 +309,102 @@ if selected_dashboard == "Product Analysis":
         selected_categories=selected_categories,
         selected_country=selected_country,
     )
-    query = f"select Product_Name, sum(sales) as rev from flat where {where_clause2} group by Product_Name order by rev desc limit 20 ;"
-    top_20 = cursor.execute(query).df()
-    st.header("Top 10 Product by Revenue")
-    fig = go.Figure()
-    fig.add_trace(
-        go.Bar(
-            x=top_20["rev"],
-            y=top_20["Product_Name"],
-            orientation="h",
-            marker_color="#15dd83",
-            name="Top 20 Products",
+    try:
+        query = f"select Product_Name, sum(sales) as rev from flat where {where_clause2} group by Product_Name order by rev desc limit 20 ;"
+        top_20 = cursor.execute(query).df()
+        st.header("Top 10 Product by Revenue")
+        fig = go.Figure()
+        fig.add_trace(
+            go.Bar(
+                x=top_20["rev"],
+                y=top_20["Product_Name"],
+                orientation="h",
+                marker_color="#15dd83",
+                name="Top 20 Products",
+            )
         )
-    )
-    fig.update_layout(
-        xaxis_title="Revenue",
-        yaxis_title="Product Name",
-        yaxis=dict(autorange="reversed"),
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    query = f"select Product_Name, sum(sales) as rev from flat where {where_clause2} group by Product_Name order by rev asc limit 20 ;"
-    bottom_20 = cursor.execute(query).df()
-    st.header("Bottom 10 Product by Revenue")
-    fig = go.Figure()
-    fig.add_trace(
-        go.Bar(
-            x=bottom_20["rev"],
-            y=bottom_20["Product_Name"],
-            orientation="h",
-            marker_color="#cc2d2d",
-            name="Bottom 20 Products",
+        fig.update_layout(
+            xaxis_title="Revenue",
+            yaxis_title="Product Name",
+            yaxis=dict(autorange="reversed"),
         )
-    )
-    fig.update_layout(
-        xaxis_title="Revenue",
-        yaxis_title="Product Name",
-        yaxis=dict(
-            categoryorder="array", categoryarray=bottom_20["Product_Name"][::-1]
-        ),
-    )
-    st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
 
+    try:
+        query = f"select Product_Name, sum(sales) as rev from flat where {where_clause2} group by Product_Name order by rev asc limit 20 ;"
+        bottom_20 = cursor.execute(query).df()
+        st.header("Bottom 10 Product by Revenue")
+        fig = go.Figure()
+        fig.add_trace(
+            go.Bar(
+                x=bottom_20["rev"],
+                y=bottom_20["Product_Name"],
+                orientation="h",
+                marker_color="#cc2d2d",
+                name="Bottom 20 Products",
+            )
+        )
+        fig.update_layout(
+            xaxis_title="Revenue",
+            yaxis_title="Product Name",
+            yaxis=dict(
+                categoryorder="array", categoryarray=bottom_20["Product_Name"][::-1]
+            ),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
     # --------------------------------------------------------------------------------------------------------------------------
     # top and bottom 10 generiting profit/loss
-    query = f"select Product_Name, sum(profit) as rev from flat where {where_clause2} group by Product_Name order by rev desc limit 20 ;"
-    top_20_p = cursor.execute(query).df()
-    st.header("Top 10 Profit-Generating Products")
-    fig = go.Figure()
-    fig.add_trace(
-        go.Bar(
-            x=top_20_p["rev"],
-            y=top_20_p["Product_Name"],
-            orientation="h",
-            marker_color="#0dff00",
-            name="Top 20 Products",
+    try:
+        query = f"select Product_Name, sum(profit) as rev from flat where {where_clause2} group by Product_Name order by rev desc limit 20 ;"
+        top_20_p = cursor.execute(query).df()
+        st.header("Top 10 Profit-Generating Products")
+        fig = go.Figure()
+        fig.add_trace(
+            go.Bar(
+                x=top_20_p["rev"],
+                y=top_20_p["Product_Name"],
+                orientation="h",
+                marker_color="#0dff00",
+                name="Top 20 Products",
+            )
         )
-    )
-    fig.update_layout(
-        xaxis_title="Profit",
-        yaxis_title="Product Name",
-        yaxis=dict(autorange="reversed"),
-    )
-    st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(
+            xaxis_title="Profit",
+            yaxis_title="Product Name",
+            yaxis=dict(autorange="reversed"),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
 
-    query = f"select Product_Name, sum(profit) as rev from flat where {where_clause2} group by Product_Name order by rev asc limit 20 ;"
-    bottom_20_p = cursor.execute(query).df()
-    st.header("10 Lowest Performing Products")
-    fig = go.Figure()
-    fig.add_trace(
-        go.Bar(
-            x=bottom_20_p["rev"],
-            y=bottom_20_p["Product_Name"],
-            orientation="h",
-            marker_color="#ff0000",
-            name="Bottom 20 Products",
+    try:    
+        query = f"select Product_Name, sum(profit) as rev from flat where {where_clause2} group by Product_Name order by rev asc limit 20 ;"
+        bottom_20_p = cursor.execute(query).df()
+        st.header("10 Lowest Performing Products")
+        fig = go.Figure()
+        fig.add_trace(
+            go.Bar(
+                x=bottom_20_p["rev"],
+                y=bottom_20_p["Product_Name"],
+                orientation="h",
+                marker_color="#ff0000",
+                name="Bottom 20 Products",
+            )
         )
-    )
-    fig.update_layout(
-        xaxis_title="Profit/Loss",
-        yaxis_title="Product Name",
-        yaxis=dict(
-            categoryorder="array", categoryarray=bottom_20["Product_Name"][::-1]
-        ),
-    )
-    st.plotly_chart(fig, use_container_width=True)
-    
+        fig.update_layout(
+            xaxis_title="Profit/Loss",
+            yaxis_title="Product Name",
+            yaxis=dict(
+                categoryorder="array", categoryarray=bottom_20["Product_Name"][::-1]
+            ),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
 ###########################################################################################################################
 #                                                customer Section
 ###########################################################################################################################
@@ -379,37 +421,55 @@ if selected_dashboard == "Regional Analysis":
     # we have to hardcode it, it can be made dynamic with Globals injection but our script/app should be predictable
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        query = (
-            f"select sum(sales) from flat where Country = 'France' and {where_clause} "
-        )
-        france_rev = cursor.execute(query).fetchone()[0]
-        st.metric(label="France", value=f"${france_rev:,.0f}")
+        try:
+            query = (
+                f"select sum(sales) from flat where Country = 'France' and {where_clause} "
+            )
+            france_rev = cursor.execute(query).fetchone()[0]
+            st.metric(label="France", value=f"${france_rev:,.0f}")
+        except Exception:
+            st.text("No data found for this selection.")
     with col2:
-        query = (
-            f"select sum(sales) from flat where Country = 'Germany' and {where_clause} "
-        )
-        Germany_rev = cursor.execute(query).fetchone()[0]
-        st.metric(label="Germany", value=f"${Germany_rev:,.0f}")
+        try:
+            query = (
+                f"select sum(sales) from flat where Country = 'Germany' and {where_clause} "
+            )
+            Germany_rev = cursor.execute(query).fetchone()[0]
+            st.metric(label="Germany", value=f"${Germany_rev:,.0f}")
+        except Exception:
+            st.text("No data found for this selection.")
     with col3:
-        query = f"select sum(sales) from flat where Country = 'Usa' and {where_clause} "
-        usa_rev = cursor.execute(query).fetchone()[0]
-        st.metric(label="USA", value=f"${usa_rev:,.0f}")
+        try:
+            query = f"select sum(sales) from flat where Country = 'Usa' and {where_clause} "
+            usa_rev = cursor.execute(query).fetchone()[0]
+            st.metric(label="USA", value=f"${usa_rev:,.0f}")
+        except Exception:
+            st.text("No data found for this selection.")
     with col4:
-        query = (
-            f"select sum(sales) from flat where Country = 'Italy' and {where_clause} "
-        )
-        itlly_rev = cursor.execute(query).fetchone()[0]
-        st.metric(label="Italy", value=f"${itlly_rev:,.0f}")
+        try:
+            query = (
+                f"select sum(sales) from flat where Country = 'Italy' and {where_clause} "
+            )
+            itlly_rev = cursor.execute(query).fetchone()[0]
+            st.metric(label="Italy", value=f"${itlly_rev:,.0f}")
+        except Exception:
+            st.text("no data available fot this filter")
 
     # pie chart shoeing countrywise contribution iin revenue
-    query = f"select upper(Country) as Country, sum(sales) as Revenue from flat where {where_clause} group by Country;"
-    country_rev = cursor.execute(query).df()
-    fig = px.pie(country_rev, names="Country", values="Revenue")
-    st.header("Revenue Share by Country")
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        query = f"select upper(Country) as Country, sum(sales) as Revenue from flat where {where_clause} group by Country;"
+        country_rev = cursor.execute(query).df()
+        fig = px.pie(country_rev, names="Country", values="Revenue")
+        st.header("Revenue Share by Country")
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
 
     # top 20 customers contributing in revenue
-    query = f"select Customer_ID, CONCAT(First_Name, ' ', Last_Name) AS Name, Country, round(sum(sales),2) as Revenue from flat where {where_clause2} group by Customer_ID , Name, Country order by Revenue desc limit 20"
-    top_20_cust = cursor.execute(query).df()
-    st.header("Top 20 Customers by Revenue")
-    st.table(top_20_cust)
+    try:
+        query = f"select Customer_ID, CONCAT(First_Name, ' ', Last_Name) AS Name, Country, round(sum(sales),2) as Revenue from flat where {where_clause2} group by Customer_ID , Name, Country order by Revenue desc limit 20"
+        top_20_cust = cursor.execute(query).df()
+        st.header("Top 20 Customers by Revenue")
+        st.dataframe(top_20_cust,use_container_width=True)
+    except Exception:
+        st.text("No data found for this selection.")
