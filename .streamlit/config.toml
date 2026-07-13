@@ -1,0 +1,7 @@
+[theme]
+primaryColor = "#23abf2"         
+backgroundColor = "#282a36"   
+secondaryBackgroundColor = "#21222c" 
+textColor = "#FFFFFF"             
+font = "Roboto:https://googleapis.com"
+showSidebarBorder = true 

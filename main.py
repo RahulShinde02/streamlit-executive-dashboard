@@ -58,8 +58,8 @@ def get_Data(path: str):
 #  it will be fast, look clean and organized
 selected_dashboard = option_menu(
     menu_title=None,
-    options=["Sales Analysis", "Product Analysis", "Regional Analysis"],
-    icons=["graph-up-arrow", "box-seam", "globe"],
+    options=["Sales Analysis", "Product Analysis", "Regional Analysis",],
+    icons=["graph-up-arrow", "box-seam", "globe-europe-africa"],
     orientation="horizontal",
     styles={
         "container": {
@@ -76,8 +76,8 @@ selected_dashboard = option_menu(
             "color": "black",
         },
         "nav-link-selected": {
-            "background-color": "#FFDD00",
-            "color": "white",
+            "background-color": "#fdc646",
+            "color": "#ffffff",
             "font-weight": "600",
         },
     },
@@ -86,7 +86,7 @@ selected_dashboard = option_menu(
 st.set_page_config(page_title="Executive Analytics Dashboard", layout="wide")
 
 # logo in sidebar so it wont take valuable space on main dashboard
-st.sidebar.image(get_Data("dataset/images/logo.jpg"))
+st.sidebar.image(get_Data("dataset/images/logo.png"))
 st.sidebar.title("Retail Sailors ™", text_alignment="center")
 #########################################################################################################################
 #                                             Sidebar and filter section
@@ -227,7 +227,7 @@ if selected_dashboard == "Sales Analysis":
         fig.update_layout(
             xaxis_title="Months", yaxis=dict(title="Revenue"), yaxis2=dict(title="Orders")
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     except Exception:
         st.text("No data found for this selection.")
 
@@ -251,7 +251,7 @@ if selected_dashboard == "Sales Analysis":
             xaxis_title="Month",
             yaxis_title="Profit",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     except Exception:
         st.text("No data found for this selection.")
     query = f"Select * from flat where {where_clause}"
@@ -299,7 +299,7 @@ if selected_dashboard == "Product Analysis":
         query = f"select Category, sum(sales) as rev from flat where {where_clause} group by Category"
         pro_cat_rev = cursor.execute(query).df()
         fig = px.pie(pro_cat_rev, names="Category", values="rev")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     except Exception:
         st.text("No data found for this selection.")
 
@@ -328,7 +328,7 @@ if selected_dashboard == "Product Analysis":
             yaxis_title="Product Name",
             yaxis=dict(autorange="reversed"),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     except Exception:
         st.text("No data found for this selection.")
 
@@ -353,7 +353,7 @@ if selected_dashboard == "Product Analysis":
                 categoryorder="array", categoryarray=bottom_20["Product_Name"][::-1]
             ),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     except Exception:
         st.text("No data found for this selection.")
     # --------------------------------------------------------------------------------------------------------------------------
@@ -377,7 +377,7 @@ if selected_dashboard == "Product Analysis":
             yaxis_title="Product Name",
             yaxis=dict(autorange="reversed"),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     except Exception:
         st.text("No data found for this selection.")
 
@@ -402,7 +402,7 @@ if selected_dashboard == "Product Analysis":
                 categoryorder="array", categoryarray=bottom_20["Product_Name"][::-1]
             ),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     except Exception:
         st.text("No data found for this selection.")
 ###########################################################################################################################
@@ -461,7 +461,7 @@ if selected_dashboard == "Regional Analysis":
         country_rev = cursor.execute(query).df()
         fig = px.pie(country_rev, names="Country", values="Revenue")
         st.header("Revenue Share by Country")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     except Exception:
         st.text("No data found for this selection.")
 
@@ -470,6 +470,6 @@ if selected_dashboard == "Regional Analysis":
         query = f"select Customer_ID, CONCAT(First_Name, ' ', Last_Name) AS Name, Country, round(sum(sales),2) as Revenue from flat where {where_clause2} group by Customer_ID , Name, Country order by Revenue desc limit 20"
         top_20_cust = cursor.execute(query).df()
         st.header("Top 20 Customers by Revenue")
-        st.dataframe(top_20_cust,use_container_width=True)
+        st.dataframe(top_20_cust,width="stretch")
     except Exception:
         st.text("No data found for this selection.")
