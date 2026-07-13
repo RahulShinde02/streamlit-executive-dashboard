@@ -467,7 +467,7 @@ if selected_dashboard == "Regional Analysis":
 
     # top 20 customers contributing in revenue
     try:
-        query = f"select Customer_ID, CONCAT(First_Name, ' ', Last_Name) AS Name, Country, round(sum(sales),2) as Revenue from flat where {where_clause2} group by Customer_ID , Name, Country order by Revenue desc limit 20"
+        query = f"select Customer_ID as 'Customer ID' , CONCAT(First_Name, ' ', Last_Name) AS Name, City , Country,count(distinct Order_ID) as 'Total Orders' , round(sum(sales),2) as Revenue from flat where {where_clause2} group by Customer_ID , Name, City, Country order by Revenue desc limit 20"
         top_20_cust = cursor.execute(query).df()
         st.header("Top 20 Customers by Revenue")
         st.dataframe(top_20_cust,width="stretch")
