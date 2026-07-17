@@ -195,6 +195,7 @@ if selected_dashboard == "Sales Analysis":
         except Exception:
             st.text("No data found for this selection.")
 
+    st.divider(width="stretch")
     # dual axis bar graph for sales and order count
     try:
         query = f"select year_month, sum(sales) as sales , count(Order_ID) as orders, from flat WHERE  {where_clause} group by year_month order by year_month asc;"
@@ -231,6 +232,7 @@ if selected_dashboard == "Sales Analysis":
     except Exception:
         st.text("No data found for this selection.")
 
+    st.divider(width="stretch")
     # bar chart showing month wise profit
     try:
         query = f"select year_month as Month, sum(profit) as Profit from flat WHERE  {where_clause} group by year_month order by year_month asc;"
@@ -294,14 +296,42 @@ if selected_dashboard == "Product Analysis":
         except Exception:
             st.text("No data found for this selection.")
 
+    st.divider(width="stretch")
+
+    col1 , col2 = st.columns(2)
+    with col1:
     # pie chart showing each product category share in revenue
-    try:
-        query = f"select Category, sum(sales) as rev from flat where {where_clause} group by Category"
-        pro_cat_rev = cursor.execute(query).df()
-        fig = px.pie(pro_cat_rev, names="Category", values="rev")
-        st.plotly_chart(fig, width='stretch')
-    except Exception:
-        st.text("No data found for this selection.")
+        st.subheader("Revenue Share by Category",text_alignment="center")
+        try:
+            query = f"select Category, sum(sales) as rev from flat where {where_clause} group by Category"
+            pro_cat_rev = cursor.execute(query).df()
+            fig = px.pie(pro_cat_rev, names="Category", values="rev")
+            st.plotly_chart(fig, width='stretch')
+        except Exception:
+            st.text("No data found for this selection.")
+
+    with col2:
+        # scatter plot showing profit and revenue against category
+        st.subheader("Category Performance",text_alignment="center")
+        try:
+            query = f"select Category, round(sum(sales),2) as Revenue, round(sum(profit),2) as Profit from flat where {where_clause} group by Category"
+            cat_sale_profit = cursor.execute(query).df()
+            fig = px.scatter(
+                data_frame=cat_sale_profit, 
+                x="Revenue", 
+                y="Profit", 
+                text="Category",
+                color="Category",
+                size="Profit", 
+                size_max=15     
+            )
+
+            fig.update_traces(textposition='top center')
+            st.plotly_chart(fig, width="stretch")
+        except Exception:
+            st.text("No data found for this selection.") 
+
+    st.divider(width="stretch")   
 
     # top and bottom 10 products by revenue
     where_clause2 = where_builder(
@@ -455,17 +485,40 @@ if selected_dashboard == "Regional Analysis":
         except Exception:
             st.text("no data available fot this filter")
 
-    # pie chart shoeing countrywise contribution iin revenue
-    try:
-        query = f"select upper(Country) as Country, sum(sales) as Revenue from flat where {where_clause} group by Country;"
-        country_rev = cursor.execute(query).df()
-        fig = px.pie(country_rev, names="Country", values="Revenue")
-        st.header("Revenue Share by Country")
-        st.plotly_chart(fig, width='stretch')
-    except Exception:
-        st.text("No data found for this selection.")
-
+    st.divider(width="stretch")
+    col1 , col2 = st.columns(2)
+    with col1:
+        # pie chart shoeing countrywise contribution iin revenue
+        try:
+            query = f"select upper(Country) as Country, sum(sales) as Revenue from flat where {where_clause} group by Country;"
+            country_rev = cursor.execute(query).df()
+            fig = px.pie(country_rev, names="Country", values="Revenue")
+            st.subheader("Revenue Share by Country",text_alignment="center")
+            st.plotly_chart(fig, width='stretch')
+        except Exception:
+            st.text("No data found for this selection.")
+    
+    with col2:
+        st.subheader("Revenue vs Profit by Country",text_alignment="center")
+        try:
+            # scatterplot showing profit and revenue against country
+            query = f"select upper(Country) as Country, round(sum(sales),2) as Revenue, round(sum(profit),2) as Profit from flat where {where_clause} group by Country;"
+            country_rev_profit = cursor.execute(query).df()
+            fig = px.scatter(data_frame=country_rev_profit,
+                             x = "Revenue",
+                             y = "Profit",
+                            text="Country",
+                            color="Country",
+                            size="Profit", 
+                            size_max=15,
+                             )
+            fig.update_traces(textposition="top right")
+            st.plotly_chart(fig,width="stretch")
+        except Exception:
+            st.text("No data found for this selection.")            
     # top 20 customers contributing in revenue
+
+    st.divider(width="stretch")
     try:
         query = f"select Customer_ID as 'Customer ID' , CONCAT(First_Name, ' ', Last_Name) AS Name, City , Country,count(distinct Order_ID) as 'Total Orders' , round(sum(sales),2) as Revenue from flat where {where_clause2} group by Customer_ID , Name, City, Country order by Revenue desc limit 20"
         top_20_cust = cursor.execute(query).df()
