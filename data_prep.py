@@ -59,3 +59,12 @@ products
 orders.to_parquet(r"dataset/cleaned_dataset/orders.parquet")
 customers.to_parquet(r"dataset/cleaned_dataset/customers.parquet")
 products.to_parquet(r"dataset/cleaned_dataset/products.parquet")
+
+
+# additional city coordinate added later
+
+df = pd.read_csv(r"D:\Python_projects\streamlit_dashboard\dataset\raw_dataset\cordinates.csv")
+# %%
+del df['Country']
+# %%
+df.to_parquet(r"D:\Python_projects\streamlit_dashboard\dataset\cleaned_dataset\cordinates.parquet")
